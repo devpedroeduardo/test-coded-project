@@ -28,6 +28,9 @@ class Atividade(models.Model):
     titulo = models.CharField(max_length=200)
     descricao = models.TextField()
     data_entrega = models.DateTimeField()
+    
+    # 👇 Novo campo para o professor enviar PDF, imagem, etc. 👇
+    arquivo = models.FileField(upload_to='atividades_arquivos/', null=True, blank=True)
 
     def __str__(self):
         return self.titulo
@@ -37,6 +40,9 @@ class Resposta(models.Model):
     aluno = models.ForeignKey(User, on_delete=models.CASCADE, related_name='respostas')
     atividade = models.ForeignKey(Atividade, on_delete=models.CASCADE, related_name='respostas')
     texto_resposta = models.TextField()
+    
+    # 👇 Novo campo para o aluno anexar a resolução 👇
+    arquivo = models.FileField(upload_to='respostas_arquivos/', null=True, blank=True)
     
     # Nota permite null inicialmente (quando o aluno envia), mas o validador garante o limite quando avaliado.
     nota = models.DecimalField(

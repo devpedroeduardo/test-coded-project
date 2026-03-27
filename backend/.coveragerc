@@ -1,0 +1,6 @@
+[run]
+omit =
+    manage.py
+    setup/*
+    escola/migrations/*
+    */__init__.py

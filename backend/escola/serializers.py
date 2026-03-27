@@ -9,15 +9,15 @@ class TurmaSerializer(serializers.ModelSerializer):
 class AtividadeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Atividade
-        fields = ['id', 'titulo', 'descricao', 'turma', 'data_entrega', 'professor']
-        # O professor nunca é enviado no body da requisição, nós pegamos do token de quem está logado.
+        # 👇 Adicionamos o 'arquivo' aqui na lista
+        fields = ['id', 'titulo', 'descricao', 'turma', 'data_entrega', 'professor', 'arquivo']
         read_only_fields = ['professor'] 
 
 class RespostaAlunoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Resposta
-        fields = ['id', 'atividade', 'texto_resposta', 'nota', 'feedback', 'criado_em']
-        # Bloqueamos nota e feedback aqui, pois o aluno não pode se autoavaliar.
+        # 👇 Adicionamos o 'arquivo' aqui na lista também
+        fields = ['id', 'atividade', 'texto_resposta', 'arquivo', 'nota', 'feedback', 'criado_em']
         read_only_fields = ['nota', 'feedback', 'criado_em']
 
 class RespostaProfessorSerializer(serializers.ModelSerializer):
@@ -26,9 +26,7 @@ class RespostaProfessorSerializer(serializers.ModelSerializer):
         fields = ['id', 'nota', 'feedback']
         
     def validate_nota(self, value):
-        """Garante a regra: A nota deve estar entre 0 e 10. Nota é obrigatória."""
+        # Apenas barramos a nota vazia. O limite de 0 a 10 já é feito pelo Models!
         if value is None:
             raise serializers.ValidationError("A nota é obrigatória na correção.")
-        if value < 0 or value > 10:
-            raise serializers.ValidationError("A nota deve estar entre 0 e 10.")
         return value

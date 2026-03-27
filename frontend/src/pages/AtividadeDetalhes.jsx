@@ -1,11 +1,12 @@
 // eslint-disable-next-line react-refresh/only-export-components
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import api from '../services/api';
+import Header from '../components/Header';
 
 const AtividadeDetalhes = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
   
   const [isProfessor, setIsProfessor] = useState(false);
   const [respostas, setRespostas] = useState([]);
@@ -39,7 +40,7 @@ const AtividadeDetalhes = () => {
         }
       } else {
         console.error(error);
-        alert("Erro ao carregar os dados.");
+        toast.error("Erro ao carregar os dados.");
       }
     }
   };
@@ -53,11 +54,11 @@ const AtividadeDetalhes = () => {
     e.preventDefault();
     try {
       await api.post('/respostas/', { atividade: id, texto_resposta: textoResposta });
-      alert('Resposta enviada com sucesso!');
+      toast.success('Resposta enviada com sucesso!');
       carregarDados();
     } catch (error) {
       console.error(error);
-      alert(error.response?.data[0] || "Erro ao enviar resposta.");
+      toast.error(error.response?.data[0] || "Erro ao enviar resposta.");
     }
   };
 
@@ -67,25 +68,19 @@ const AtividadeDetalhes = () => {
         nota: notas[respostaId],
         feedback: feedbacks[respostaId]
       });
-      alert('Nota salva com sucesso!');
+      toast.success('Nota salva com sucesso!');
       carregarDados();
     } catch (error) {
       console.error(error);
-      alert("Erro ao salvar nota. Lembre-se que a nota deve ser entre 0 e 10.");
+      toast.error("Erro ao salvar nota. Lembre-se que a nota deve ser entre 0 e 10.");
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="flex items-center gap-4 px-8 py-4 bg-white shadow-sm border-b border-gray-200">
-        <button 
-          onClick={() => navigate(-1)} 
-          className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-md transition-colors"
-        >
-          ← Voltar
-        </button>
-        <h2 className="text-2xl font-bold text-gray-800">Painel da Atividade</h2>
-      </header>
+      
+      {/* Usamos o novo Header aqui */}
+      <Header titulo="Painel da Atividade" />
 
       <main className="p-8 max-w-4xl mx-auto">
         {isProfessor ? (

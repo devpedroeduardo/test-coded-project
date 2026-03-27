@@ -10,6 +10,11 @@ RUN apt-get update && apt-get install -y gcc libpq-dev
 # Copia tudo da sua pasta atual para dentro do container
 COPY . /app/
 
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
 # Instala as bibliotecas do Python
 RUN pip install --no-cache-dir django djangorestframework djangorestframework-simplejwt djangorestframework-simplejwt django-cors-headers
 

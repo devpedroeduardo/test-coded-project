@@ -2,9 +2,13 @@ from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, permissions
 from rest_framework.exceptions import PermissionDenied, ValidationError
+from django.db.models import Count, Avg  # <-- IMPORTANTE: Adicionado para o Dashboard
+from rest_framework.views import APIView  # <-- IMPORTANTE: Adicionado para o Dashboard
+from rest_framework.response import Response # <-- IMPORTANTE: Adicionado para o Dashboard
 from .models import Atividade, Resposta
 from .serializers import AtividadeSerializer, RespostaAlunoSerializer, RespostaProfessorSerializer
 from .permissions import IsProfessor, IsAluno
+from drf_spectacular.utils import extend_schema
 
 # ==========================================
 # ENDPOINTS DE ATIVIDADES
@@ -22,11 +26,11 @@ class MeAtividadesView(generics.ListAPIView):
     def get_queryset(self):
         user = self.request.user
         if user.role == 'PROFESSOR':
-            return Atividade.objects.filter(professor=user)
+            return Atividade.objects.filter(professor=user).order_by('-id')
         elif user.role == 'ALUNO':
             if not user.turma:
                 return Atividade.objects.none() # Aluno sem turma não vê nada
-            return Atividade.objects.filter(turma=user.turma)
+            return Atividade.objects.filter(turma=user.turma).order_by('-id')
         return Atividade.objects.none()
 
 
@@ -72,10 +76,11 @@ class MeRespostasView(generics.ListAPIView):
     """ GET /me/respostas (Somente ALUNO) """
     serializer_class = RespostaAlunoSerializer
     permission_classes = [IsAluno]
+    pagination_class = None # Desativa paginação para esta view, já que o número de respostas por aluno é pequeno
 
     def get_queryset(self):
         # Lista respostas já enviadas pelo aluno logado
-        return Resposta.objects.filter(aluno=self.request.user)
+        return Resposta.objects.filter(aluno=self.request.user).order_by('-id')
 
 
 class AtividadeRespostasView(generics.ListAPIView):
@@ -91,7 +96,7 @@ class AtividadeRespostasView(generics.ListAPIView):
         if atividade.professor != self.request.user:
             raise PermissionDenied("Você só tem permissão para ver respostas de atividades que você criou.")
 
-        return Resposta.objects.filter(atividade=atividade)
+        return Resposta.objects.filter(atividade=atividade).order_by('-id')
 
 
 class RespostaUpdateView(generics.UpdateAPIView):
@@ -127,3 +132,35 @@ class RespostaUpdateView(generics.UpdateAPIView):
                 raise PermissionDenied("Você não pode dar nota em uma atividade de outro professor.")
             
             serializer.save()
+
+# ==========================================
+# DASHBOARD
+# ==========================================
+class ProfessorDashboardView(APIView):
+    """ GET /me/dashboard/ (Somente PROFESSOR) """
+    permission_classes = [IsProfessor]
+
+    @extend_schema(
+        summary="Métricas do Professor",
+        description="Retorna o total de atividades criadas, total de respostas recebidas e a média geral das notas dadas pelo professor logado.",
+        tags=["Dashboard"]
+    )
+
+    def get(self, request):
+        user = request.user
+        
+        # 1. Quantas atividades esse professor criou?
+        total_atividades = Atividade.objects.filter(professor=user).count()
+        
+        # 2. Quantas respostas os alunos enviaram para as atividades dele?
+        total_respostas = Resposta.objects.filter(atividade__professor=user).count()
+        
+        # 3. Qual a média geral das notas dadas por ele?
+        media_notas = Resposta.objects.filter(atividade__professor=user).aggregate(media=Avg('nota'))['media']
+
+        return Response({
+            'total_atividades': total_atividades,
+            'total_respostas': total_respostas,
+            # Se a média for None (nenhuma nota dada ainda), retornamos 0
+            'media_notas_geral': round(media_notas, 2) if media_notas else 0.0
+        })

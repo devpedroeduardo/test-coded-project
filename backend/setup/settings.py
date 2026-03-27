@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
+    'drf_spectacular',
     'escola'
 ]
 
@@ -122,6 +123,10 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+import os
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
@@ -137,7 +142,29 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
-    )
+    ),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 6, # 6 é perfeito para o nosso grid de 3 colunas!
+}
+
+# Configurações visuais do Swagger
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'API Plataforma Educacional',
+    'DESCRIPTION': 'Documentação completa da API de gestão de atividades, respostas e notas do aluno e professor.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    # Opcional: Adiciona um botão de "Authorize" no Swagger para testarmos com o Token JWT direto na tela
+    'SECURITY': [{'jwtAuth': []}],
+    'COMPONENTS': {
+        'securitySchemes': {
+            'jwtAuth': {
+                'type': 'http',
+                'scheme': 'bearer',
+                'bearerFormat': 'JWT',
+            }
+        }
+    }
 }
 
 # Configurações do CORS para permitir que o frontend acesse a API
