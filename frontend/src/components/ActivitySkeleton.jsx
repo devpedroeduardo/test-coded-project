@@ -2,7 +2,6 @@ import React from 'react';
 
 const ActivitySkeleton = () => {
   return (
-    // Imitamos a estrutura exata do container do ActivityCard original
     <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100 flex flex-col justify-between hover:shadow-md transition-shadow">
       <div>
         {/* Skeleton do Título (Mais largo e alto) */}

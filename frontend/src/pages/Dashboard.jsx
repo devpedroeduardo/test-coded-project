@@ -62,13 +62,12 @@ const Dashboard = () => {
 
   useEffect(() => {
     carregarAtividades(1);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleCriarAtividade = async (e) => {
     e.preventDefault();
     try {
-      // 👇 ALTERAÇÃO: Cria o FormData para suportar o envio de ficheiros
+      // Cria o FormData para suportar o envio de ficheiros
       const formData = new FormData();
       formData.append('titulo', novaAtiv.titulo);
       formData.append('descricao', novaAtiv.descricao);

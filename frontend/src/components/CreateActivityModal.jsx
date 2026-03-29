@@ -37,12 +37,10 @@ const CreateActivityModal = ({ isOpen, onClose, novaAtiv, setNovaAtiv, handleCri
             </div>
           </div>
 
-          {/* 👇 NOVO CAMPO: UPLOAD DE ARQUIVO */}
           <div className="bg-blue-50/50 p-4 rounded-lg border border-blue-100 border-dashed mt-2">
             <label className="block text-sm font-medium text-blue-800 mb-2">Material de Apoio (Opcional):</label>
             <input 
               type="file" 
-              // Ao invés de pegar o e.target.value (texto), pegamos o arquivo real em e.target.files[0]
               onChange={(e) => setNovaAtiv({...novaAtiv, arquivo: e.target.files[0]})}
               className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 transition-all cursor-pointer"
             />

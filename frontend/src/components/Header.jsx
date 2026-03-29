@@ -6,7 +6,7 @@ const Header = ({ titulo, extraActions }) => {
   const navigate = useNavigate();
   const { logout, auth } = useAuth();
 
-  // UX: Pega as iniciais do usuário (ex: admin -> A, prof_pedro -> PP)
+  //Pega as iniciais do usuário (ex: admin -> A, prof_pedro -> PP)
   const getIniciais = () => {
     if (!auth || !auth.username) return 'U';
     const partes = auth.username.split(/[._-]/); // Separa por ponto, underline ou traço

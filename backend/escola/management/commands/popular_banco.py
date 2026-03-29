@@ -2,7 +2,6 @@ from django.core.management.base import BaseCommand
 from django.contrib.auth.models import Group
 from django.contrib.auth import get_user_model
 
-# Isso garante que ele pegue o usuário certo, seja o padrão ou um customizado seu!
 User = get_user_model() 
 
 class Command(BaseCommand):
@@ -11,7 +10,7 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         self.stdout.write('Iniciando a criação de dados de teste...')
 
-        # 1. Criação dos Grupos (se não existirem)
+        # 1. Criação dos Grupos
         grupo_prof, created_prof = Group.objects.get_or_create(name='Professor')
         grupo_aluno, created_aluno = Group.objects.get_or_create(name='Aluno')
         

@@ -9,14 +9,13 @@ class TurmaSerializer(serializers.ModelSerializer):
 class AtividadeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Atividade
-        # 👇 Adicionamos o 'arquivo' aqui na lista
+        # Adicionei o 'arquivo' aqui na lista
         fields = ['id', 'titulo', 'descricao', 'turma', 'data_entrega', 'professor', 'arquivo']
         read_only_fields = ['professor'] 
 
 class RespostaAlunoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Resposta
-        # 👇 Adicionamos o 'arquivo' aqui na lista também
         fields = ['id', 'atividade', 'texto_resposta', 'arquivo', 'nota', 'feedback', 'criado_em']
         read_only_fields = ['nota', 'feedback', 'criado_em']
 
@@ -26,7 +25,6 @@ class RespostaProfessorSerializer(serializers.ModelSerializer):
         fields = ['id', 'nota', 'feedback']
         
     def validate_nota(self, value):
-        # Apenas barramos a nota vazia. O limite de 0 a 10 já é feito pelo Models!
         if value is None:
             raise serializers.ValidationError("A nota é obrigatória na correção.")
         return value

@@ -11,7 +11,7 @@ const Login = () => {
   
   const { login } = useAuth();
 
-  // UX: Carrega o usuário salvo se o "Lembrar de mim" foi marcado antes
+  // Carrega o usuário salvo se o "Lembrar de mim" foi marcado antes
   useEffect(() => {
     const savedUser = localStorage.getItem('escola_saved_username');
     if (savedUser) {
@@ -35,8 +35,7 @@ const Login = () => {
       try {
         await login(username, password);
       } catch (error) {
-        console.error("Erro de autenticação:", error); // <-- ADICIONE ESTA LINHA
-        // O erro real já deve ser tratado no AuthContext...
+        console.error("Erro de autenticação:", error);
       } finally {
         setIsSubmitting(false);
       }

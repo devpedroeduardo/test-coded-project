@@ -10,7 +10,6 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        {/* 2. Colocamos o Toaster aqui, para ele ficar disponível em todo o app */}
         <Toaster position="top-right" reverseOrder={false} /> 
         
         <Routes>

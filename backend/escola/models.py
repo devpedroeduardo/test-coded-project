@@ -8,7 +8,7 @@ class User(AbstractUser):
         ALUNO = 'ALUNO', 'Aluno'
 
     role = models.CharField(max_length=10, choices=Role.choices, default=Role.ALUNO)
-    # O Aluno deve estar em uma turma. Deixamos null=True pois o Professor não precisa de turma.
+    # O Aluno deve estar em uma turma. Deixei null pois o Professor não precisa de turma.
     turma = models.ForeignKey('Turma', on_delete=models.SET_NULL, null=True, blank=True, related_name='alunos')
 
     def __str__(self):
@@ -29,7 +29,7 @@ class Atividade(models.Model):
     descricao = models.TextField()
     data_entrega = models.DateTimeField()
     
-    # 👇 Novo campo para o professor enviar PDF, imagem, etc. 👇
+    # Campo para o professor enviar PDF, imagem, etc.
     arquivo = models.FileField(upload_to='atividades_arquivos/', null=True, blank=True)
 
     def __str__(self):
@@ -41,10 +41,10 @@ class Resposta(models.Model):
     atividade = models.ForeignKey(Atividade, on_delete=models.CASCADE, related_name='respostas')
     texto_resposta = models.TextField()
     
-    # 👇 Novo campo para o aluno anexar a resolução 👇
+    # Campo para o aluno anexar a resolução 
     arquivo = models.FileField(upload_to='respostas_arquivos/', null=True, blank=True)
     
-    # Nota permite null inicialmente (quando o aluno envia), mas o validador garante o limite quando avaliado.
+    # Nota permite null inicialmente, mas o validador garante o limite quando avaliado.
     nota = models.DecimalField(
         max_digits=4, 
         decimal_places=2, 
@@ -57,7 +57,7 @@ class Resposta(models.Model):
     atualizado_em = models.DateTimeField(auto_now=True)
 
     class Meta:
-        # Garante a regra: O Aluno não pode enviar mais de uma resposta para a mesma atividade.
+        # O Aluno não pode enviar mais de uma resposta para a mesma atividade.
         unique_together = ['aluno', 'atividade']
 
     def __str__(self):

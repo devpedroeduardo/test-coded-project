@@ -18,7 +18,7 @@ const AtividadeDetalhes = () => {
   const [notas, setNotas] = useState({});
   const [feedbacks, setFeedbacks] = useState({});
   
-  // 👇 NOVO ESTADO: Para guardar o arquivo selecionado pelo aluno
+  // Para guardar o arquivo selecionado pelo aluno
   const [arquivo, setArquivo] = useState(null);
 
   const carregarDados = async () => {
@@ -56,13 +56,12 @@ const AtividadeDetalhes = () => {
     if (user) {
       carregarDados();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, user]);
 
   const handleEnviarResposta = async (e) => {
     e.preventDefault();
     try {
-      // 👇 MUDANÇA AQUI: Usando FormData ao invés de JSON para suportar o arquivo
+      // Usando FormData ao invés de JSON para suportar o arquivo
       const formData = new FormData();
       formData.append('atividade', id);
       formData.append('texto_resposta', textoResposta);
@@ -71,7 +70,6 @@ const AtividadeDetalhes = () => {
         formData.append('arquivo', arquivo);
       }
 
-      // O Axios reconhece o FormData automaticamente e ajusta os headers
       await api.post('/respostas/', formData);
       toast.success('Resposta enviada com sucesso!');
       carregarDados();
@@ -115,7 +113,6 @@ const AtividadeDetalhes = () => {
                     <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Resposta do Aluno</span>
                     <p className="text-gray-800 mt-1 text-lg">{resp.texto_resposta}</p>
                     
-                    {/* 👇 EXIBINDO O ANEXO PARA O PROFESSOR */}
                     {resp.arquivo && (
                       <a 
                         href={resp.arquivo} 
@@ -172,7 +169,6 @@ const AtividadeDetalhes = () => {
                   <span className="text-xs font-bold text-blue-500 uppercase tracking-wider">O que você enviou</span>
                   <p className="text-gray-800 mt-2 text-lg bg-white p-4 rounded border border-blue-100">{minhaResposta.texto_resposta}</p>
                   
-                  {/* 👇 EXIBINDO O ANEXO PARA O PRÓPRIO ALUNO */}
                   {minhaResposta.arquivo && (
                     <a 
                       href={minhaResposta.arquivo} 
