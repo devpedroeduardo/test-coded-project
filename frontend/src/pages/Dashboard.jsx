@@ -23,18 +23,21 @@ const Dashboard = () => {
   const [filtro, setFiltro] = useState('todas'); 
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [novaAtiv, setNovaAtiv] = useState({ titulo: '', descricao: '', turma: '', data_entrega: '' });
+  const [novaAtiv, setNovaAtiv] = useState({ titulo: '', descricao: '', turma: '', data_entrega: '', arquivo: null });
 
   const carregarAtividades = async (pagina = 1) => {
     setLoading(true);
     try {
       // Busca as atividades paginadas
       const responseAtiv = await api.get(`/me/atividades/?page=${pagina}`);
-      setAtividades(responseAtiv.data.results);
       
-      // Atualiza os controles de página para o ESLint não reclamar!
-      setTemProxima(responseAtiv.data.next !== null);
-      setTemAnterior(responseAtiv.data.previous !== null);
+      // Verifica se a API devolveu paginação (.results) ou apenas a lista direta
+      const dadosAtividades = responseAtiv.data.results ? responseAtiv.data.results : responseAtiv.data;
+      setAtividades(dadosAtividades);
+      
+      // Atualiza os controles de página de forma segura
+      setTemProxima(responseAtiv.data.next ? true : false);
+      setTemAnterior(responseAtiv.data.previous ? true : false);
       setPaginaAtual(pagina);
 
       // Tenta buscar as respostas
@@ -65,14 +68,29 @@ const Dashboard = () => {
   const handleCriarAtividade = async (e) => {
     e.preventDefault();
     try {
-      await api.post('/atividades/', {
-        ...novaAtiv,
-        turma: parseInt(novaAtiv.turma)
-      });
+      // 👇 ALTERAÇÃO: Cria o FormData para suportar o envio de ficheiros
+      const formData = new FormData();
+      formData.append('titulo', novaAtiv.titulo);
+      formData.append('descricao', novaAtiv.descricao);
+      formData.append('turma', parseInt(novaAtiv.turma));
+      
+      // O Django espera que a data seja enviada caso tenha sido preenchida
+      if (novaAtiv.data_entrega) {
+        formData.append('data_entrega', novaAtiv.data_entrega);
+      }
+
+      // Adiciona o ficheiro apenas se o professor tiver selecionado algo
+      if (novaAtiv.arquivo) {
+        formData.append('arquivo', novaAtiv.arquivo);
+      }
+
+      // Envia o formData ao invés do objeto JSON
+      await api.post('/atividades/', formData);
       
       toast.success('Atividade criada com sucesso!');
       setIsModalOpen(false);
-      setNovaAtiv({ titulo: '', descricao: '', turma: '', data_entrega: '' });
+      // Limpa o estado incluindo o ficheiro
+      setNovaAtiv({ titulo: '', descricao: '', turma: '', data_entrega: '', arquivo: null });
       carregarAtividades(1); // Volta para a primeira página
       
     } catch (error) {
@@ -162,7 +180,7 @@ const Dashboard = () => {
           </div>
         )}
 
-        {/* --- OS BOTÕES DE PAGINAÇÃO QUE ESTAVAM FALTANDO! --- */}
+        {/* --- BOTÕES DE PAGINAÇÃO --- */}
         {!loading && (temAnterior || temProxima) && (
           <div className="flex justify-center items-center gap-4 mt-12 border-t border-gray-200 pt-8">
             <button

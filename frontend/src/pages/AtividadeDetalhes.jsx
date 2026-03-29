@@ -1,59 +1,78 @@
-// eslint-disable-next-line react-refresh/only-export-components
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../services/api';
 import Header from '../components/Header';
+import { useAuth } from '../context/AuthContext';
 
 const AtividadeDetalhes = () => {
   const { id } = useParams();
-  
-  const [isProfessor, setIsProfessor] = useState(false);
+  const { user } = useAuth(); 
+
+  const isProfessor = user?.role === 'PROFESSOR';
+
   const [respostas, setRespostas] = useState([]);
   const [minhaResposta, setMinhaResposta] = useState(null);
   
   const [textoResposta, setTextoResposta] = useState('');
   const [notas, setNotas] = useState({});
   const [feedbacks, setFeedbacks] = useState({});
+  
+  // 👇 NOVO ESTADO: Para guardar o arquivo selecionado pelo aluno
+  const [arquivo, setArquivo] = useState(null);
 
   const carregarDados = async () => {
     try {
-      const res = await api.get(`/atividades/${id}/respostas/`);
-      setIsProfessor(true);
-      setRespostas(res.data);
-      
-      const notasIniciais = {};
-      const feedbacksIniciais = {};
-      res.data.forEach(r => {
-        notasIniciais[r.id] = r.nota || '';
-        feedbacksIniciais[r.id] = r.feedback || '';
-      });
-      setNotas(notasIniciais);
-      setFeedbacks(feedbacksIniciais);
-    } catch (error) {
-      if (error.response && error.response.status === 403) {
-        setIsProfessor(false);
+      if (isProfessor) {
+        const res = await api.get(`/atividades/${id}/respostas/`);
+        const dadosRespostas = res.data.results ? res.data.results : res.data;
+        setRespostas(dadosRespostas);
+        
+        const notasIniciais = {};
+        const feedbacksIniciais = {};
+        dadosRespostas.forEach(r => {
+          notasIniciais[r.id] = r.nota || '';
+          feedbacksIniciais[r.id] = r.feedback || '';
+        });
+        setNotas(notasIniciais);
+        setFeedbacks(feedbacksIniciais);
+
+      } else {
         const resAluno = await api.get('/me/respostas/');
-        const respostaEnviada = resAluno.data.find(r => r.atividade === parseInt(id));
+        const dadosAluno = resAluno.data.results ? resAluno.data.results : resAluno.data;
+        const respostaEnviada = dadosAluno.find(r => r.atividade === parseInt(id));
+        
         if (respostaEnviada) {
           setMinhaResposta(respostaEnviada);
         }
-      } else {
-        console.error(error);
-        toast.error("Erro ao carregar os dados.");
       }
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao carregar os dados.");
     }
   };
 
   useEffect(() => {
-    carregarDados();
+    if (user) {
+      carregarDados();
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [id, user]);
 
   const handleEnviarResposta = async (e) => {
     e.preventDefault();
     try {
-      await api.post('/respostas/', { atividade: id, texto_resposta: textoResposta });
+      // 👇 MUDANÇA AQUI: Usando FormData ao invés de JSON para suportar o arquivo
+      const formData = new FormData();
+      formData.append('atividade', id);
+      formData.append('texto_resposta', textoResposta);
+      
+      if (arquivo) {
+        formData.append('arquivo', arquivo);
+      }
+
+      // O Axios reconhece o FormData automaticamente e ajusta os headers
+      await api.post('/respostas/', formData);
       toast.success('Resposta enviada com sucesso!');
       carregarDados();
     } catch (error) {
@@ -79,7 +98,6 @@ const AtividadeDetalhes = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       
-      {/* Usamos o novo Header aqui */}
       <Header titulo="Painel da Atividade" />
 
       <main className="p-8 max-w-4xl mx-auto">
@@ -96,6 +114,21 @@ const AtividadeDetalhes = () => {
                   <div className="mb-4">
                     <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Resposta do Aluno</span>
                     <p className="text-gray-800 mt-1 text-lg">{resp.texto_resposta}</p>
+                    
+                    {/* 👇 EXIBINDO O ANEXO PARA O PROFESSOR */}
+                    {resp.arquivo && (
+                      <a 
+                        href={resp.arquivo} 
+                        target="_blank" 
+                        rel="noreferrer" 
+                        className="inline-flex items-center gap-2 mt-3 text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline bg-blue-50 px-3 py-1.5 rounded-md border border-blue-100 transition-colors"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M18.375 12.739l-7.693 7.693a4.536 4.536 0 01-6.42-6.421l10.899-10.899m-7.81 8.192l-9.05-9.05m0 0a2.268 2.268 0 013.18-3.181l9.05 9.05" />
+                        </svg>
+                        Ver anexo enviado
+                      </a>
+                    )}
                   </div>
                   
                   <div className="flex flex-wrap items-end gap-4 pt-4 border-t border-gray-200 mt-4">
@@ -138,6 +171,21 @@ const AtividadeDetalhes = () => {
                 <div className="mb-6">
                   <span className="text-xs font-bold text-blue-500 uppercase tracking-wider">O que você enviou</span>
                   <p className="text-gray-800 mt-2 text-lg bg-white p-4 rounded border border-blue-100">{minhaResposta.texto_resposta}</p>
+                  
+                  {/* 👇 EXIBINDO O ANEXO PARA O PRÓPRIO ALUNO */}
+                  {minhaResposta.arquivo && (
+                    <a 
+                      href={minhaResposta.arquivo} 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      className="inline-flex items-center gap-2 mt-3 text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline bg-white px-3 py-1.5 rounded-md border border-blue-100 transition-colors"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M18.375 12.739l-7.693 7.693a4.536 4.536 0 01-6.42-6.421l10.899-10.899m-7.81 8.192l-9.05-9.05m0 0a2.268 2.268 0 013.18-3.181l9.05 9.05" />
+                      </svg>
+                      Visualizar meu anexo
+                    </a>
+                  )}
                 </div>
                 
                 <div className="pt-6 border-t border-blue-200">
@@ -171,7 +219,19 @@ const AtividadeDetalhes = () => {
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all resize-y"
                   ></textarea>
                 </div>
-                <div className="flex justify-end">
+                
+                {/* 👇 NOVO CAMPO DE UPLOAD DE ARQUIVO */}
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 border-dashed">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Anexar Arquivo (Opcional):</label>
+                  <input 
+                    type="file" 
+                    onChange={(e) => setArquivo(e.target.files[0])}
+                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all cursor-pointer"
+                  />
+                  <p className="text-xs text-gray-500 mt-2">Você pode enviar imagens, PDFs ou documentos para complementar sua resposta.</p>
+                </div>
+
+                <div className="flex justify-end pt-2">
                   <button 
                     type="submit" 
                     className="px-8 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-colors shadow-sm"
