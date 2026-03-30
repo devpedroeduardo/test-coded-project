@@ -2,11 +2,18 @@ from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, permissions
 from rest_framework.exceptions import PermissionDenied, ValidationError
-from django.db.models import Count, Avg  # <-- IMPORTANTE: Adicionado para o Dashboard
-from rest_framework.views import APIView  # <-- IMPORTANTE: Adicionado para o Dashboard
-from rest_framework.response import Response # <-- IMPORTANTE: Adicionado para o Dashboard
+from django.db.models import Count, Avg
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework_simplejwt.views import TokenObtainPairView
+
 from .models import Atividade, Resposta
-from .serializers import AtividadeSerializer, RespostaAlunoSerializer, RespostaProfessorSerializer
+from .serializers import (
+    AtividadeSerializer, 
+    RespostaAlunoSerializer, 
+    RespostaProfessorSerializer,
+    CustomTokenObtainPairSerializer
+)
 from .permissions import IsProfessor, IsAluno
 from drf_spectacular.utils import extend_schema
 
@@ -164,3 +171,10 @@ class ProfessorDashboardView(APIView):
             # Se a média for None (nenhuma nota dada ainda), retornamos 0
             'media_notas_geral': round(media_notas, 2) if media_notas else 0.0
         })
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    """
+    POST /auth/login/
+    View customizada para retornar o JWT com 'role' e 'username' embutidos.
+    """
+    serializer_class = CustomTokenObtainPairSerializer

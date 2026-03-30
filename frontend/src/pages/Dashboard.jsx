@@ -5,20 +5,21 @@ import CreateActivityModal from '../components/CreateActivityModal';
 import ActivitySkeleton from '../components/ActivitySkeleton';
 import toast from 'react-hot-toast';
 import Header from '../components/Header';
-import { useAuth } from '../context/AuthContext'; // Importante se a API der 401
+import { useAuth } from '../context/AuthContext';
 
 const Dashboard = () => {
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
+  
+  // 👇 Aqui está o pulo do gato: o sistema lê o Token e já sabe quem é quem!
+  const isAluno = user?.role !== 'PROFESSOR';
+
   const [atividades, setAtividades] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Estados de Paginação
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [temProxima, setTemProxima] = useState(false);
   const [temAnterior, setTemAnterior] = useState(false);
 
-  // Estados de Filtros
-  const [isAluno, setIsAluno] = useState(false);
   const [respostas, setRespostas] = useState([]);
   const [filtro, setFiltro] = useState('todas'); 
 
@@ -28,31 +29,23 @@ const Dashboard = () => {
   const carregarAtividades = async (pagina = 1) => {
     setLoading(true);
     try {
-      // Busca as atividades paginadas
       const responseAtiv = await api.get(`/me/atividades/?page=${pagina}`);
-      
-      // Verifica se a API devolveu paginação (.results) ou apenas a lista direta
       const dadosAtividades = responseAtiv.data.results ? responseAtiv.data.results : responseAtiv.data;
       setAtividades(dadosAtividades);
       
-      // Atualiza os controles de página de forma segura
       setTemProxima(responseAtiv.data.next ? true : false);
       setTemAnterior(responseAtiv.data.previous ? true : false);
       setPaginaAtual(pagina);
 
-      // Tenta buscar as respostas
-      try {
+      // Proteção: Só tenta buscar as próprias respostas se o usuário for realmente um Aluno
+      if (isAluno) {
         const responseResp = await api.get('/me/respostas/');
         setRespostas(responseResp.data);
-        setIsAluno(true); 
-      } catch (err) {
-        console.log("Acesso às respostas foi negado, assumindo que é professor.", err);
-        setIsAluno(false); 
       }
 
     } catch (error) {
       console.error("Erro ao buscar atividades", error);
-      if (error.response && error.response.status === 401) {
+      if (error.response && (error.response.status === 401 || error.response.status === 403)) {
           logout();
       }
     } finally {
@@ -61,36 +54,33 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    carregarAtividades(1);
-  }, []);
+    if (user) {
+        carregarAtividades(1);
+    }
+  }, [user]);
 
   const handleCriarAtividade = async (e) => {
     e.preventDefault();
     try {
-      // Cria o FormData para suportar o envio de ficheiros
       const formData = new FormData();
       formData.append('titulo', novaAtiv.titulo);
       formData.append('descricao', novaAtiv.descricao);
       formData.append('turma', parseInt(novaAtiv.turma));
       
-      // O Django espera que a data seja enviada caso tenha sido preenchida
       if (novaAtiv.data_entrega) {
         formData.append('data_entrega', novaAtiv.data_entrega);
       }
 
-      // Adiciona o ficheiro apenas se o professor tiver selecionado algo
       if (novaAtiv.arquivo) {
         formData.append('arquivo', novaAtiv.arquivo);
       }
 
-      // Envia o formData ao invés do objeto JSON
       await api.post('/atividades/', formData);
       
       toast.success('Atividade criada com sucesso!');
       setIsModalOpen(false);
-      // Limpa o estado incluindo o ficheiro
       setNovaAtiv({ titulo: '', descricao: '', turma: '', data_entrega: '', arquivo: null });
-      carregarAtividades(1); // Volta para a primeira página
+      carregarAtividades(1); 
       
     } catch (error) {
       if (error.response && error.response.status === 403) {
@@ -118,14 +108,14 @@ const Dashboard = () => {
     return true;
   });
 
-  const acoesExtras = (
+  const acoesExtras = !isAluno ? (
     <button 
       onClick={() => setIsModalOpen(true)} 
       className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-md transition-colors shadow-sm flex items-center gap-2"
     >
       <span className="text-lg">+</span> Nova Atividade
     </button>
-  );
+  ) : null;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -179,7 +169,6 @@ const Dashboard = () => {
           </div>
         )}
 
-        {/* --- BOTÕES DE PAGINAÇÃO --- */}
         {!loading && (temAnterior || temProxima) && (
           <div className="flex justify-center items-center gap-4 mt-12 border-t border-gray-200 pt-8">
             <button

@@ -169,3 +169,10 @@ SPECTACULAR_SETTINGS = {
 
 # Configurações do CORS para permitir que o frontend acesse a API
 CORS_ALLOW_ALL_ORIGINS = True
+from datetime import timedelta
+
+# Coloque isso no final do seu settings.py
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+}

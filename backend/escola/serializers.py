@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import User, Turma, Atividade, Resposta
 
 class TurmaSerializer(serializers.ModelSerializer):
@@ -9,7 +10,6 @@ class TurmaSerializer(serializers.ModelSerializer):
 class AtividadeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Atividade
-        # Adicionei o 'arquivo' aqui na lista
         fields = ['id', 'titulo', 'descricao', 'turma', 'data_entrega', 'professor', 'arquivo']
         read_only_fields = ['professor'] 
 
@@ -28,3 +28,13 @@ class RespostaProfessorSerializer(serializers.ModelSerializer):
         if value is None:
             raise serializers.ValidationError("A nota é obrigatória na correção.")
         return value
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+
+        # Injeta os dados extras que o Front-end em React precisa ler
+        token['username'] = user.username
+        token['role'] = user.role
+
+        return token

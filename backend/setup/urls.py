@@ -7,13 +7,13 @@ from escola.views import (
     MeAtividadesView, AtividadeCreateView, 
     RespostaCreateView, MeRespostasView, 
     AtividadeRespostasView, RespostaUpdateView,
-    ProfessorDashboardView # <-- Dashboard importado aqui
+    ProfessorDashboardView, CustomTokenObtainPairView
 )
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('auth/login/', TokenObtainPairView.as_view(), name='login'),
+    path('auth/login/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('schema/', SpectacularAPIView.as_view(), name='schema'),
     path('docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
 
